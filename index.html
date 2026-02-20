@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#F2F2F7">
+    <title>الدخول الوزاري</title>
+    
+    <!-- خط تجول -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- الأيقونات Phosphor -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Chart.js و Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <!-- 🌟 مكتبة تيليجرام الرسمية (مهم جداً للربط) 🌟 -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Tajawal', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'] },
+                    colors: {
+                        ios: { bg: '#F2F2F7', darkBg: '#000000', card: '#FFFFFF', darkCard: '#1C1C1E', blue: '#007AFF', green: '#34C759', red: '#FF3B30', orange: '#FF9500', gray: '#8E8E93', light: '#E5E5EA', darkBorder: '#38383A' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #F2F2F7; transition: background-color 0.3s, color 0.3s; -webkit-tap-highlight-color: transparent; }
+        .dark body { background-color: #000000; }
+
+        input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        /* الجزيرة التفاعلية (الإشعارات) */
+        #dynamic-island {
+            position: fixed; top: 10px; left: 50%; transform: translateX(-50%) scale(0.9);
+            background: #000; color: #fff; border-radius: 30px; padding: 10px 20px;
+            font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px;
+            opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 99999; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            white-space: nowrap;
+        }
+        .dark #dynamic-island { background: #2C2C2E; }
+        #dynamic-island.active { transform: translateX(-50%) scale(1); opacity: 1; top: 15px; }
+
+        /* Segmented Control iOS 18 Style */
+        .ios-segment-bg { background: rgba(118, 118, 128, 0.12); border-radius: 12px; padding: 3px; position: relative; display: flex; }
+        .dark .ios-segment-bg { background: rgba(118, 118, 128, 0.24); }
+        .ios-segment-btn { flex: 1; text-align: center; padding: 8px 0; font-size: 14px; font-weight: 700; z-index: 10; cursor: pointer; transition: color 0.3s; color: #000; }
+        .dark .ios-segment-btn { color: #fff; }
+        .ios-segment-btn.text-ios-gray { color: #8E8E93; }
+        .ios-segment-indicator {
+            position: absolute; top: 3px; bottom: 3px; width: calc(33.33% - 2px);
+            background: #fff; border-radius: 9px; box-shadow: 0 3px 8px rgba(0,0,0,0.12), 0 3px 1px rgba(0,0,0,0.04);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1;
+        }
+        .dark .ios-segment-indicator { background: #636366; box-shadow: 0 3px 8px rgba(0,0,0,0.2); }
+
+        /* حقول الإدخال ذات الحواف الناعمة */
+        .ios-input {
+            width: 100%; text-align: center; font-weight: 800; font-size: 18px;
+            background: rgba(118, 118, 128, 0.08); border-radius: 16px; padding: 12px 4px;
+            border: 2px solid transparent; transition: all 0.2s; color: #000;
+        }
+        .dark .ios-input { background: rgba(118, 118, 128, 0.24); color: #fff; }
+        .ios-input:focus { background: #fff; border-color: #007AFF; outline: none; box-shadow: 0 0 0 4px rgba(0,122,255,0.15); }
+        .dark .ios-input:focus { background: #1C1C1E; border-color: #0A84FF; box-shadow: 0 0 0 4px rgba(10,132,255,0.15); }
+
+        /* الأزرار الأساسية */
+        .ios-button-primary {
+            background: #007AFF; color: #fff; border-radius: 999px; font-weight: 800; font-size: 18px;
+            padding: 16px; width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .ios-button-primary:active { transform: scale(0.96); opacity: 0.9; }
+        .dark .ios-button-primary { background: #0A84FF; }
+
+        /* Bottom Sheet (النافذة الرئيسية) */
+        .ios-sheet-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .ios-sheet-overlay.show { opacity: 1; pointer-events: auto; }
+        
+        .ios-sheet {
+            transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+            border-radius: 36px 36px 0 0; background: #fff; 
+            max-height: 90dvh; display: flex; flex-direction: column;
+        }
+        .dark .ios-sheet { background: #1C1C1E; }
+        .ios-sheet.show { transform: translateY(0); }
+        
+        .sheet-handle { width: 40px; height: 6px; border-radius: 3px; background: #D1D1D6; margin: 12px auto 16px; flex-shrink: 0; }
+        .dark .sheet-handle { background: #48484A; }
+
+        /* السكرول الخاص بالنافذة لتطبيق التيليجرام */
+        .sheet-content-scroll {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* زر التبديل iOS */
+        .ios-switch { width: 52px; height: 32px; background: #E5E5EA; border-radius: 16px; position: relative; cursor: pointer; transition: background 0.3s; }
+        .dark .ios-switch { background: #38383A; }
+        .ios-switch.on { background: #34C759; }
+        .ios-switch-knob {
+            width: 28px; height: 28px; background: #fff; border-radius: 50%; position: absolute; top: 2px; right: 2px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .ios-switch.on .ios-switch-knob { transform: translateX(-20px); }
+
+        .spinner { border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid #fff; border-radius: 50%; width: 22px; height: 22px; animation: spin 1s linear infinite; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .tab-content { display: none; animation: fade 0.3s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        ::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="text-slate-900 dark:text-white pb-10">
+
+    <!-- الإشعارات -->
+    <div id="dynamic-island">
+        <i id="island-icon" class="ph-fill ph-check-circle text-ios-green text-xl"></i> 
+        <span id="island-text">تم حفظ الدرجة بنجاح</span>
+    </div>
+
+    <!-- Header & Navigation -->
+    <header class="pt-14 px-5 pb-5 sticky top-0 bg-ios-bg/85 dark:bg-ios-darkBg/85 backdrop-blur-xl z-40 border-b border-slate-200/50 dark:border-slate-800/50">
+        <h1 class="text-3xl font-black tracking-tight mb-5 text-center">الدخول الوزاري</h1>
+        
+        <div class="ios-segment-bg max-w-sm mx-auto">
+            <div id="segment-indicator" class="ios-segment-indicator translate-x-[0%]"></div>
+            <div onclick="switchTab('calc', 0)" id="btn-calc" class="ios-segment-btn">الدرجات</div>
+            <div onclick="switchTab('analytics', 1)" id="btn-analytics" class="ios-segment-btn text-ios-gray">الملخص</div>
+            <div onclick="switchTab('settings', 2)" id="btn-settings" class="ios-segment-btn text-ios-gray">الإعدادات</div>
+        </div>
+    </header>
+
+    <main class="px-4 mt-6 max-w-lg mx-auto w-full">
+        
+        <!-- ================= 1. تبويب الدرجات ================= -->
+        <div id="tab-calc" class="tab-content active space-y-5">
+            
+            <div class="bg-white dark:bg-ios-darkCard rounded-[24px] p-5 shadow-sm flex items-center justify-between border border-slate-100 dark:border-ios-darkBorder">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-[16px] bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                        <i class="ph-fill ph-magic-wand text-ios-orange text-2xl"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-base">درجات القرار الوزارية</h4>
+                        <p class="text-xs font-bold text-ios-gray mt-1">توزع بذكاء لإنقاذ المواد</p>
+                    </div>
+                </div>
+                <div class="bg-ios-bg dark:bg-ios-darkBg px-4 py-2 rounded-xl text-base font-black text-ios-orange border border-slate-200 dark:border-slate-700">
+                    10 درجات
+                </div>
+            </div>
+
+            <div class="text-sm font-bold text-ios-gray px-2 mb-[-10px] mt-2">قائمة المواد الدراسية</div>
+            
+            <div id="subjects-container" class="space-y-4">
+                <!-- المواد تضاف هنا بالـ JS -->
+            </div>
+            
+            <button id="calc-btn" onclick="processCalculation()" class="ios-button-primary mt-8 shadow-lg shadow-blue-500/25">
+                <span id="calc-btn-text">عرض النتيجة النهائية</span>
+                <div id="calc-spinner" class="spinner"></div>
+            </button>
+        </div>
+
+        <!-- ================= 2. تبويب الملخص ================= -->
+        <div id="tab-analytics" class="tab-content">
+            <div class="text-sm font-bold text-ios-gray px-2 mb-3 mt-2">نظرة عامة على النتائج</div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-white dark:bg-ios-darkCard rounded-[24px] p-5 shadow-sm border border-slate-100 dark:border-ios-darkBorder flex flex-col items-center">
+                    <div class="text-ios-gray text-xs font-bold mb-2">المعدل العام للسعي</div>
+                    <div id="stat-avg" class="text-3xl font-black text-ios-blue">-</div>
+                </div>
+                <div class="bg-white dark:bg-ios-darkCard rounded-[24px] p-5 shadow-sm border border-slate-100 dark:border-ios-darkBorder flex flex-col items-center">
+                    <div class="text-ios-gray text-xs font-bold mb-2">عدد المواد الناجحة</div>
+                    <div id="stat-passed" class="text-3xl font-black text-ios-green">-</div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-ios-darkCard rounded-[24px] p-5 shadow-sm border border-slate-100 dark:border-ios-darkBorder relative overflow-hidden">
+                <h3 class="font-bold text-base mb-4">مخطط السعي الشامل</h3>
+                <div class="w-full h-64 relative">
+                    <canvas id="myChart"></canvas>
+                    <div id="chart-overlay" class="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-ios-darkCard/80 backdrop-blur-md z-10 rounded-[16px]">
+                        <span class="text-base font-bold text-ios-gray">يرجى عرض النتيجة أولاً لإنشاء المخطط</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= 3. تبويب الإعدادات ================= -->
+        <div id="tab-settings" class="tab-content">
+            
+            <div class="flex flex-col items-center justify-center py-8">
+                <div class="w-28 h-28 rounded-[28px] bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-xl shadow-blue-500/20 mb-4">
+                    <i class="ph-fill ph-student text-6xl text-white"></i>
+                </div>
+                <h2 class="text-2xl font-black">الدخول الوزاري</h2>
+                <p class="text-sm text-ios-gray font-bold mt-1">متصل بالبوت 🤖⚡️</p>
+            </div>
+
+            <div class="text-sm font-bold text-ios-gray px-2 mb-2">إعدادات عامة</div>
+            <div class="bg-white dark:bg-ios-darkCard rounded-[24px] shadow-sm border border-slate-100 dark:border-ios-darkBorder overflow-hidden mb-6">
+                
+                <div class="p-5 flex items-center justify-between border-b border-slate-100 dark:border-ios-darkBorder">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-[12px] bg-slate-800 flex items-center justify-center text-white"><i class="ph-fill ph-moon text-xl"></i></div>
+                        <span class="font-bold text-base">الوضع الليلي (Dark Mode)</span>
+                    </div>
+                    <div id="theme-switch" class="ios-switch" onclick="toggleTheme()">
+                        <div class="ios-switch-knob"></div>
+                    </div>
+                </div>
+
+                <div class="p-5 flex items-center justify-between border-b border-slate-100 dark:border-ios-darkBorder">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-[12px] bg-ios-blue flex items-center justify-center text-white"><i class="ph-fill ph-code text-xl"></i></div>
+                        <span class="font-bold text-base">تطوير وبرمجة</span>
+                    </div>
+                    <span class="text-base font-black text-ios-blue bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-xl">عبدالرحيم</span>
+                </div>
+                
+                <div class="p-5 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-[12px] bg-ios-green flex items-center justify-center text-white"><i class="ph-fill ph-floppy-disk text-xl"></i></div>
+                        <span class="font-bold text-base">الحفظ التلقائي للدرجات</span>
+                    </div>
+                    <span class="text-xs font-bold bg-green-100 dark:bg-green-900/30 text-ios-green px-3 py-1.5 rounded-xl">مُفعل تلقائياً</span>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-ios-darkCard rounded-[24px] shadow-sm border border-slate-100 dark:border-ios-darkBorder overflow-hidden mt-6">
+                <button onclick="resetData()" class="w-full p-5 flex items-center justify-center gap-2 text-ios-red font-bold text-base transition active:bg-slate-50 dark:active:bg-slate-800">
+                    <i class="ph-bold ph-trash text-xl"></i> مسح جميع الدرجات نهائياً
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Bottom Sheet (النافذة الرئيسية للنتيجة) -->
+    <div id="sheet-overlay" class="fixed inset-0 z-50 ios-sheet-overlay" onclick="closeSheet()"></div>
+    
+    <div id="result-sheet" class="fixed bottom-0 left-0 w-full z-50 ios-sheet">
+        <div class="sheet-handle"></div>
+        
+        <!-- حاوية السكرول الداخلية -->
+        <div class="sheet-content-scroll">
+            <!-- رأس التقرير -->
+            <div class="px-6 pb-6 pt-2 text-center border-b border-slate-100 dark:border-ios-darkBorder shrink-0 bg-white dark:bg-ios-darkCard">
+                <div id="sheet-icon-wrap" class="w-20 h-20 mx-auto rounded-[24px] flex items-center justify-center mb-4 text-white shadow-xl">
+                    <i id="sheet-icon" class="text-5xl"></i>
+                </div>
+                <h2 class="text-2xl font-black mb-2 text-slate-900 dark:text-white">التقرير النهائي للدرجات</h2>
+                <div id="sheet-status" class="inline-block px-5 py-2 rounded-full text-base font-black mt-1"></div>
+                
+                <div id="grace-details" class="mt-5 flex justify-center gap-10 text-sm font-bold bg-ios-bg dark:bg-ios-darkBg py-3 rounded-2xl hidden border border-slate-200 dark:border-slate-700 mx-4">
+                    <div class="text-ios-gray">الدرجات المستخدمة: <span id="grace-used" class="text-ios-orange font-black text-lg mx-1">0</span></div>
+                    <div class="w-px bg-slate-300 dark:bg-slate-600"></div>
+                    <div class="text-ios-gray">الدرجات المتبقية: <span id="grace-left" class="text-ios-green font-black text-lg mx-1">10</span></div>
+                </div>
+            </div>
+
+            <!-- تفاصيل المواد -->
+            <div class="px-5 py-5 pb-8 bg-ios-bg dark:bg-black">
+                <div class="text-sm font-bold text-ios-gray px-2 mb-3">تفصيل السعي لكل مادة دراسية</div>
+                
+                <div id="report-list" class="bg-white dark:bg-ios-darkCard rounded-[24px] border border-slate-100 dark:border-ios-darkBorder overflow-hidden divide-y divide-slate-100 dark:divide-ios-darkBorder shadow-sm">
+                    <!-- Data injected here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 🌟 الأزرار السفلية (إرسال للبوت) 🌟 -->
+        <div class="px-5 pb-5 pt-4 bg-ios-bg dark:bg-black border-t border-slate-200/50 dark:border-slate-800/50 shrink-0" style="padding-bottom: env(safe-area-inset-bottom, 20px);">
+            <div class="flex flex-col gap-3">
+                <button id="send-bot-btn" onclick="sendResultToBot()" class="w-full bg-ios-blue/10 dark:bg-ios-blue/20 text-ios-blue font-bold py-4 rounded-full text-lg flex justify-center items-center gap-2 hover:bg-ios-blue/20 transition active:scale-95">
+                    <i id="send-bot-icon" class="ph-bold ph-paper-plane-right text-2xl"></i> 
+                    <span id="send-bot-text">إرسال النتيجة للبوت</span>
+                </button>
+                <button onclick="closeSheet()" class="w-full bg-ios-blue text-white font-bold py-4 rounded-full text-lg shadow-md hover:opacity-90 transition active:scale-95">
+                    إغلاق التقرير
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // إعداد تيليجرام
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // لجعل التطبيق يأخذ الشاشة كاملة فور فتحه
+        tg.ready();
+
+        // التوكن الخاص بك
+        const BOT_TOKEN = "8420801544:AAHxaeTXwUzG2IWhU4Wic5l-iT1Vw1sIvR8";
+
+        const subjects = [
+            { id: 'islamic', name: 'التربية الإسلامية', icon: 'mosque', color: '#34C759' },
+            { id: 'arabic', name: 'اللغة العربية', icon: 'text-aa', color: '#007AFF' },
+            { id: 'english', name: 'اللغة الإنكليزية', icon: 'translate', color: '#5856D6' },
+            { id: 'math', name: 'الرياضيات', icon: 'function', color: '#FF2D55' },
+            { id: 'biology', name: 'علم الأحياء', icon: 'dna', color: '#34C759' },
+            { id: 'chemistry', name: 'علم الكيمياء', icon: 'flask', color: '#FF9500' },
+            { id: 'physics', name: 'علم الفيزياء', icon: 'atom', color: '#FF3B30' },
+        ];
+
+        let gradesData = JSON.parse(localStorage.getItem('ios18_grades')) || {};
+        if(Object.keys(gradesData).length === 0) {
+            subjects.forEach(sub => gradesData[sub.id] = { t1: '', my: '', t2: '' });
+        }
+
+        let myChartInstance = null;
+        let finalReportText = ""; 
+
+        // إشعارات الجزيرة التفاعلية
+        let islandTimeout;
+        function showNotification(msg, iconClass, colorClass = "text-ios-green") {
+            clearTimeout(islandTimeout);
+            const island = document.getElementById('dynamic-island');
+            document.getElementById('island-icon').className = `ph-fill ${iconClass} ${colorClass} text-xl`;
+            document.getElementById('island-text').innerText = msg;
+            
+            island.classList.add('active');
+            islandTimeout = setTimeout(() => island.classList.remove('active'), 3000);
+        }
+
+        // إعداد الوضع الليلي
+        function initTheme() {
+            const isDark = localStorage.getItem('ios_theme') === 'dark' || (!('ios_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('theme-switch').classList.add('on');
+                if(tg.setHeaderColor) tg.setHeaderColor('#000000'); // مطابقة لون هيدر تيليجرام
+            } else {
+                if(tg.setHeaderColor) tg.setHeaderColor('#F2F2F7');
+            }
+        }
+        initTheme();
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('ios_theme', isDark ? 'dark' : 'light');
+            document.getElementById('theme-switch').classList.toggle('on');
+            
+            if(tg.setHeaderColor) tg.setHeaderColor(isDark ? '#000000' : '#F2F2F7');
+            if(myChartInstance) updateChartColors();
+        }
+
+        // التبديل بين التبويبات
+        function switchTab(tabId, index) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            
+            const indicator = document.getElementById('segment-indicator');
+            indicator.style.transform = `translateX(-${index * 100}%)`;
+
+            const tabs = ['calc', 'analytics', 'settings'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`btn-${t}`);
+                if (t === tabId) btn.classList.remove('text-ios-gray');
+                else btn.classList.add('text-ios-gray');
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // بناء الواجهة
+        function buildCalculator() {
+            const container = document.getElementById('subjects-container');
+            container.innerHTML = '';
+
+            subjects.forEach(sub => {
+                const vals = gradesData[sub.id];
+                const card = document.createElement('div');
+                card.className = 'bg-white dark:bg-ios-darkCard rounded-[24px] p-5 shadow-sm border border-slate-100 dark:border-ios-darkBorder mb-4';
+                
+                card.innerHTML = `
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-[12px] flex items-center justify-center text-white shadow-sm" style="background-color: ${sub.color}">
+                            <i class="ph-fill ph-${sub.icon} text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-base text-slate-900 dark:text-white">${sub.name}</h3>
+                            <div id="status-${sub.id}" class="text-xs font-bold text-ios-gray mt-1">يرجى إدخال الدرجات</div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="flex flex-col">
+                            <span class="text-[11px] font-bold text-ios-gray mb-1.5 text-center">الفصل الأول</span>
+                            <input type="number" id="${sub.id}-t1" value="${vals.t1}" class="ios-input" oninput="handleInput('${sub.id}', 't1', this.value)">
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-[11px] font-bold text-ios-gray mb-1.5 text-center">نصف السنة</span>
+                            <input type="number" id="${sub.id}-my" value="${vals.my}" class="ios-input" oninput="handleInput('${sub.id}', 'my', this.value)">
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-[11px] font-bold text-ios-blue mb-1.5 text-center">الفصل الثاني</span>
+                            <input type="number" id="${sub.id}-t2" value="${vals.t2}" class="ios-input border-ios-blue/20 bg-blue-50/40 dark:bg-blue-900/10" oninput="handleInput('${sub.id}', 't2', this.value)">
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+                updateLiveStatus(sub.id);
+            });
+        }
+
+        function handleInput(subjectId, term, value) {
+            let val = parseInt(value);
+            if (isNaN(val)) val = '';
+            if (val !== '' && val > 100) { val = 100; document.getElementById(`${subjectId}-${term}`).value = 100; }
+            if (val !== '' && val < 0) { val = 0; document.getElementById(`${subjectId}-${term}`).value = 0; }
+
+            gradesData[subjectId][term] = val;
+            updateLiveStatus(subjectId);
+            
+            localStorage.setItem('ios18_grades', JSON.stringify(gradesData));
+        }
+
+        function updateLiveStatus(id) {
+            const vals = gradesData[id];
+            const statusDiv = document.getElementById(`status-${id}`);
+            
+            if (vals.t1 !== '' && vals.my !== '') {
+                const sum = parseInt(vals.t1) + parseInt(vals.my);
+                const for50 = 150 - sum;
+                
+                if (vals.t2 !== '') {
+                    const avg = Math.round((sum + parseInt(vals.t2)) / 3);
+                    if(avg >= 50) statusDiv.innerHTML = `<span class="text-ios-green">مؤمّن (السعي: ${avg})</span>`;
+                    else if(avg >= 40) statusDiv.innerHTML = `<span class="text-ios-orange">يحتاج قرار (السعي: ${avg})</span>`;
+                    else statusDiv.innerHTML = `<span class="text-ios-red">مرحلة الخطر (السعي: ${avg})</span>`;
+                } else {
+                    if (sum >= 150) statusDiv.innerHTML = `<span class="text-ios-green">أنت بأمان، لا تحتاج لدرجات إضافية.</span>`;
+                    else if (for50 <= 100) statusDiv.innerHTML = `<span class="text-ios-blue">تحتاج لـ ${for50} درجة للنجاح الصافي.</span>`;
+                    else statusDiv.innerHTML = `<span class="text-ios-orange">ستحتاج درجات القرار للنجاح بهذه المادة.</span>`;
+                }
+            } else {
+                statusDiv.innerHTML = 'يرجى إكمال الإدخال...';
+            }
+        }
+
+        // الحساب النهائي والنتيجة
+        function processCalculation() {
+            const btn = document.getElementById('calc-btn');
+            const txt = document.getElementById('calc-btn-text');
+            const spin = document.getElementById('calc-spinner');
+            
+            btn.style.opacity = '0.8';
+            txt.style.display = 'none';
+            spin.style.display = 'block';
+
+            setTimeout(() => {
+                btn.style.opacity = '1';
+                txt.style.display = 'block';
+                spin.style.display = 'none';
+                calculateFinal();
+            }, 800);
+        }
+
+        function calculateFinal() {
+            let incomplete = false;
+            let processedSubjects = [];
+
+            subjects.forEach(sub => {
+                const g = gradesData[sub.id];
+                if (g.t1 === '' || g.my === '' || g.t2 === '') { incomplete = true; return; }
+                const sum = parseInt(g.t1) + parseInt(g.my) + parseInt(g.t2);
+                const avg = Math.round(sum / 3);
+                processedSubjects.push({ ...sub, originalAvg: avg, finalAvg: avg, graceUsed: 0 });
+            });
+
+            if (incomplete) { 
+                showNotification("يرجى إكمال جميع الدرجات أولاً", "ph-warning-circle", "text-ios-orange");
+                return; 
+            }
+
+            // توزيع الـ 10 درجات
+            let gracePool = 10;
+            let totalGraceUsed = 0;
+            let failingSubjects = processedSubjects.filter(s => s.originalAvg < 50);
+            failingSubjects.sort((a, b) => b.originalAvg - a.originalAvg); 
+
+            failingSubjects.forEach(sub => {
+                let needed = 50 - sub.originalAvg;
+                if (needed > 0 && needed <= gracePool) {
+                    sub.finalAvg = 50;
+                    sub.graceUsed = needed;
+                    gracePool -= needed;
+                    totalGraceUsed += needed;
+                }
+            });
+
+            let failedCount = 0;
+            let reportRows = '';
+            let totalAvgSum = 0;
+            
+            // تجهيز نص النتيجة الذي سيُرسل للبوت
+            finalReportText = "🎓 التقرير النهائي للدخول الوزاري:\n\n";
+
+            processedSubjects.forEach(sub => {
+                totalAvgSum += sub.finalAvg;
+                let badge = '', numColor = '';
+                
+                if (sub.graceUsed > 0) {
+                    badge = `<span class="text-xs font-bold bg-orange-100 dark:bg-orange-900/30 text-ios-orange px-2.5 py-1 rounded-lg flex items-center gap-1 w-max"><i class="ph-fill ph-magic-wand"></i> ناجح بالقرار (+${sub.graceUsed})</span>`;
+                    numColor = 'text-ios-orange';
+                    finalReportText += `🔸 ${sub.name}: ${sub.finalAvg} (تمت إضافة ${sub.graceUsed} درجة قرار)\n`;
+                } else if (sub.finalAvg >= 50) {
+                    badge = `<span class="text-xs font-bold bg-green-100 dark:bg-green-900/30 text-ios-green px-2.5 py-1 rounded-lg flex items-center gap-1 w-max"><i class="ph-fill ph-check-circle"></i> ناجح</span>`;
+                    numColor = 'text-ios-green';
+                    finalReportText += `✅ ${sub.name}: ${sub.finalAvg}\n`;
+                } else {
+                    failedCount++;
+                    badge = `<span class="text-xs font-bold bg-red-100 dark:bg-red-900/30 text-ios-red px-2.5 py-1 rounded-lg flex items-center gap-1 w-max"><i class="ph-fill ph-x-circle"></i> راسب</span>`;
+                    numColor = 'text-ios-red';
+                    finalReportText += `❌ ${sub.name}: ${sub.finalAvg}\n`;
+                }
+
+                reportRows += `
+                    <div class="p-4 flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-[12px] flex items-center justify-center text-white" style="background-color: ${sub.color}">
+                                <i class="ph-fill ph-${sub.icon} text-xl"></i>
+                            </div>
+                            <div class="flex flex-col gap-1.5">
+                                <span class="text-base font-black">${sub.name}</span>
+                                <div>${badge}</div>
+                            </div>
+                        </div>
+                        <span class="text-2xl font-black ${numColor}">${sub.finalAvg}</span>
+                    </div>
+                `;
+            });
+
+            document.getElementById('report-list').innerHTML = reportRows;
+            
+            const isEntered = failedCount <= 3;
+            const iconWrap = document.getElementById('sheet-icon-wrap');
+            const icon = document.getElementById('sheet-icon');
+            const status = document.getElementById('sheet-status');
+            
+            if (isEntered) {
+                iconWrap.className = "w-24 h-24 mx-auto rounded-[28px] flex items-center justify-center mb-4 text-white shadow-xl shadow-green-500/40 bg-ios-green";
+                icon.className = "ph-fill ph-check-circle text-6xl";
+                status.className = "inline-block px-5 py-2 rounded-full text-base font-black mt-2 bg-green-100 dark:bg-green-900/40 text-ios-green";
+                status.innerHTML = failedCount === 0 ? "مؤهل للدخول (ناجح في جميع المواد) 🎉" : `مؤهل للدخول (مكمل في ${failedCount} مواد)`;
+                confetti({ particleCount: 120, spread: 80, origin: { y: 0.8 }, colors: ['#34C759', '#007AFF', '#FF9500'], zIndex: 100000 });
+                finalReportText += `\n🎉 الحالة النهائية: مؤهل للدخول الوزاري بنجاح!`;
+            } else {
+                iconWrap.className = "w-24 h-24 mx-auto rounded-[28px] flex items-center justify-center mb-4 text-white shadow-xl shadow-red-500/40 bg-ios-red";
+                icon.className = "ph-fill ph-x-circle text-6xl";
+                status.className = "inline-block px-5 py-2 rounded-full text-base font-black mt-2 bg-red-100 dark:bg-red-900/40 text-ios-red";
+                status.innerHTML = `غير مؤهل للدخول (راسب في ${failedCount} مواد) ❌`;
+                finalReportText += `\n❌ الحالة النهائية: غير مؤهل للدخول الوزاري.`;
+            }
+            
+            finalReportText += `\n📊 المعدل العام: ${Math.round(totalAvgSum / subjects.length)}%`;
+
+            document.getElementById('grace-used').innerText = totalGraceUsed;
+            document.getElementById('grace-left').innerText = gracePool;
+            document.getElementById('grace-details').classList.remove('hidden');
+
+            document.getElementById('stat-avg').innerText = Math.round(totalAvgSum / subjects.length) + "%";
+            document.getElementById('stat-passed').innerText = (subjects.length - failedCount) + " من " + subjects.length;
+            document.getElementById('chart-overlay').style.display = 'none';
+            drawChart(processedSubjects);
+
+            // تفعيل الـ Sheet وإعادة زر الإرسال لشكله الطبيعي
+            resetBotButton();
+            document.getElementById('sheet-overlay').classList.add('show');
+            document.getElementById('result-sheet').classList.add('show');
+        }
+
+        function closeSheet() {
+            document.getElementById('sheet-overlay').classList.remove('show');
+            document.getElementById('result-sheet').classList.remove('show');
+        }
+
+        // ================= 🌟 دالة الإرسال للبوت 🌟 ================= //
+        function sendResultToBot() {
+            // التحقق من أن المستخدم فاتح التطبيق من تيليجرام
+            const user = tg.initDataUnsafe?.user;
+            
+            if (!user || !user.id) {
+                showNotification("يرجى فتح التطبيق من داخل محادثة البوت في تيليجرام!", "ph-warning-circle", "text-ios-red");
+                return;
+            }
+
+            const chatId = user.id; // استخراج رقم محادثة المستخدم تلقائياً
+            
+            const btn = document.getElementById('send-bot-btn');
+            const icon = document.getElementById('send-bot-icon');
+            const text = document.getElementById('send-bot-text');
+
+            // تغيير شكل الزر (تحميل)
+            btn.style.opacity = '0.8';
+            btn.style.pointerEvents = 'none';
+            icon.className = "ph-bold ph-spinner ph-spin text-2xl text-ios-blue";
+            text.innerText = "جاري إرسال النتيجة...";
+
+            // طلب API مباشر للبوت لإرسال الرسالة للمستخدم
+            fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    text: finalReportText
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.ok) {
+                    icon.className = "ph-bold ph-check-circle text-2xl text-ios-green";
+                    text.innerText = "تم الإرسال للمحادثة!";
+                    showNotification("تم إرسال النتيجة بنجاح ✅", "ph-check-circle", "text-ios-green");
+                    
+                    // إغلاق التطبيق تلقائياً بعد ثانيتين للرجوع للمحادثة ورؤية النتيجة
+                    setTimeout(() => tg.close(), 2000);
+                } else {
+                    throw new Error(data.description);
+                }
+            })
+            .catch(error => {
+                resetBotButton();
+                showNotification("حدث خطأ، لا يمكن الإرسال الآن.", "ph-x-circle", "text-ios-red");
+            });
+        }
+
+        function resetBotButton() {
+            const btn = document.getElementById('send-bot-btn');
+            const icon = document.getElementById('send-bot-icon');
+            const text = document.getElementById('send-bot-text');
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'auto';
+            icon.className = "ph-bold ph-paper-plane-right text-2xl";
+            text.innerText = "إرسال النتيجة للبوت";
+        }
+        // ========================================================= //
+
+        function resetData() {
+            if(confirm('هل أنت متأكد من مسح جميع بياناتك المدخلة نهائياً؟')) {
+                localStorage.removeItem('ios18_grades');
+                subjects.forEach(sub => gradesData[sub.id] = { t1: '', my: '', t2: '' });
+                buildCalculator();
+                document.getElementById('chart-overlay').style.display = 'flex';
+                document.getElementById('stat-avg').innerText = '-';
+                document.getElementById('stat-passed').innerText = '-';
+                if(myChartInstance) myChartInstance.destroy();
+                showNotification("تم مسح البيانات بنجاح", "ph-trash", "text-ios-red");
+            }
+        }
+
+        function drawChart(data) {
+            const ctx = document.getElementById('myChart').getContext('2d');
+            if(myChartInstance) myChartInstance.destroy();
+
+            const isDark = document.documentElement.classList.contains('dark');
+            const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+            const textColor = isDark ? '#8E8E93' : '#8E8E93';
+
+            myChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(s => s.name.split(' ').slice(-1)),
+                    datasets: [{
+                        data: data.map(s => s.finalAvg),
+                        backgroundColor: data.map(s => s.color),
+                        borderRadius: 8,
+                        barThickness: 18
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: true } },
+                    scales: {
+                        y: { max: 100, beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor, font: {family: 'Tajawal', weight: 'bold'} } },
+                        x: { grid: { display: false }, ticks: { color: textColor, font: {family: 'Tajawal', weight: 'bold', size: 10} } }
+                    },
+                    animation: { duration: 1200, easing: 'easeOutQuart' }
+                }
+            });
+        }
+
+        function updateChartColors() {
+            if(!myChartInstance) return;
+            const isDark = document.documentElement.classList.contains('dark');
+            myChartInstance.options.scales.y.grid.color = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+            myChartInstance.update();
+        }
+
+        window.onload = buildCalculator;
+    </script>
+</body>
+</html>
